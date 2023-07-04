@@ -1,0 +1,39 @@
+### 解题思路
+
+&#x20;我们从t的第一个字母开始逐一去寻找s中存在的t\[i],并在遍历的过程中持续累加 举题目的s="babgbag",t="bag" 为例 先创建dp\[lent]\[lens]数组，代表遍历到t的第i个字符时，s从0到j累计了几个可能的组合。 1.先找第一个字母，并将它们初始化为1(此时dp\[0]\[0],dp\[0]\[2],dp\[0]\[4]为1) 2.从t的第二个字母开始遍历，并初始化num为0，只要遇到dp\[i-1]\[j]>0，代表前一个字符到这里累计的字符数，num需加上dp\[i]\[j]，而当t\[i]==s\[j]的时候，我们将累计的nums赋予dp\[i]\[j]。 (举例，dp\[0]\[1]>0，所以此时num+=1 。s\[1]==t\[1]，此时s\[1]前面只有一个b(num==1)，所以dp\[i]\[j]==num==1，接下来dp\[i-1]\[2]、dp\[i-1]\[4]皆须让num+dp\[i-1]\[j]，所以num=3,而最后s\[5]==t\[1]，dp\[i]\[j]就等于3。g的情况可自行递推) 3.最后将最后一行的数相加即为答案。 由于我们只会用到上一行的代码，所以我们用一个2行lens列的数组储存dp即可 不懂的建议照着代码一步一步在纸上写出来每一行的情况比较方便理解，不然用看的可能比较难懂。
+
+### 代码
+
+* cpp
+
+```cpp
+class Solution {
+public:
+    int numDistinct(string s, string t) {
+        int lent=t.length(),lens=s.length();
+        int dp[2][lens];
+        memset(dp,0,sizeof(dp));
+        for(int i=0;i<lens;i++){
+            if(s[i]==t[0])dp[0&1][i]=1;
+        }
+        for(int i=1;i<lent;i++){
+            long num=0;
+            memset(dp[i&1],0,sizeof(dp[i&1]));  //将当前要用的行初始化
+            for(int j=0;j<lens;j++){
+                if(s[j]==t[i]){
+                    dp[i&1][j]=num;
+                }
+                if(dp[(i-1)&1][j]>0){
+                    num+=dp[(i-1)&1][j];
+                }
+            }
+        }
+        int ans=0;
+        for(int i=0;i<lens;i++){
+            ans+=dp[(lent-1)&1][i];
+        }
+        return ans;
+    }
+};
+```
+

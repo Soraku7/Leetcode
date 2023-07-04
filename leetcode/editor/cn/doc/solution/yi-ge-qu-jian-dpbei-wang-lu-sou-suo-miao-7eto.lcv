@@ -1,0 +1,42 @@
+* 
+
+```
+class Solution {
+/*
+动态规划算法：
+    dp(i,j)表示从s的0~i中匹配t的0~j的子序列个数
+状态转移方程有：
+    如果s[i] != t[j] 则dp(i,j) = dp(i-1, j);
+    如果s[i] == t[j] 则dp(i,j) = dp(i-1, j-1) + dp(i-1,j);  //表示我们从选择这里继续向下匹配or不选择该位置直接跳过向后匹配
+减枝：
+    当i < j 时直接返回0；
+记忆搜索：
+    我们使用memo[n][m]记录每一次搜索,-1表示未搜索的记录
+边界：
+    dp(i,-1)表示t匹配完成，我们直接返回1
+    因减枝，i始终大于等于j，故i等于-1但j不等于-1的情况根本不可能存在，无需考虑
+递归入口：
+    dp(n-1,m-1);
+*/
+public:
+    int numDistinct(string s, string t) {
+        int n = s.size(), m = t.size();
+        int memo[n][m];
+        memset(memo, -1, sizeof(memo));
+
+        function<int(int,int)> dp = [&](int i, int j)->int{
+            if(i < j) return 0;
+            if(j == -1) return 1;
+            int& res = memo[i][j];
+            if(res != -1) return res;
+            //如果没有搜索过我们完成搜索
+            if(s[i] != t[j]) res = dp(i-1,j);
+            else res = dp(i-1, j-1) + dp(i-1,j);
+            return res;
+        };
+
+        return dp(n-1,m-1);
+    }
+};
+```
+
