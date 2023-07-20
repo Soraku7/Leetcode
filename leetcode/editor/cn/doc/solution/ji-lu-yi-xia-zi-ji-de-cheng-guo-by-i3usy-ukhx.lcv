@@ -1,0 +1,35 @@
+刷力扣以来，第二道能自己写出来的题
+
+class Solution {
+
+public:
+
+&#x20;   vector\<vector\<int>> generate(int numRows) {
+
+vector\<vector\<int>> a;
+
+vector\<int> b;
+
+int j=0;
+
+for(int i=1;i<=numRows;i++){
+
+&#x20;   for(int j=0;j\<i;j++){
+
+&#x20;       if(j==0||j==i-1)b.push\_back(1);
+
+&#x20;       else b.push\_back(a\[i-2]\[j]+a\[i-2]\[j-1]);
+
+&#x20;   }
+
+&#x20;   a.push\_back(b);
+
+&#x20;   b.clear();
+
+}
+
+return a;
+
+&#x20;   }
+
+};

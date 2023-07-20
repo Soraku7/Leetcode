@@ -1,0 +1,29 @@
+# 层次遍历
+
+通过队列实现二叉树的层次遍历，每层当遍历到最后一个元素时使其next指向NULL，否则指向当前层的下一个元素即当前元素弹出后的que.front()
+
+* 
+
+```
+class Solution {
+public:
+    Node* connect(Node* root) {
+        queue<Node*> que;
+        if(root==NULL) return NULL;
+        que.push(root);
+        while(!que.empty()){
+            int size = que.size();
+            for(int i = 0; i < size; i++){
+                Node* node = que.front();
+                que.pop();
+                if(i==(size-1)) node->next = NULL;
+                else node->next = que.front();
+                if(node->left) que.push(node->left);
+                if(node->right) que.push(node->right); 
+            }
+        }
+        return root;
+    }
+};
+```
+
