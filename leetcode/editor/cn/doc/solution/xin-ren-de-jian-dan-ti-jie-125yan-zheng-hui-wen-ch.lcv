@@ -1,0 +1,36 @@
+### 解题思路
+
+先把字符串处理成小写的，这是为了避免类似0，P这样ascii码相差32但不是大小写字母关系的字符对在之后的判断中产生影响，处理后直接判断字符是否相等即可。
+
+利用指针i,j从两边到中间，如果遇到的是非字母与数字，则指针继续移动直到遇到字母或数字，如果发现i>j,则说明从上一次循环i，j之间的位置全是无效字符，而之前的区域已经判断过没有异常，所以直接return true即可。
+
+显然该算法的时间复杂度是O(n);针对i>j的情况实际上还可优化，即当首次出现这种情况时就return true；
+
+### 代码
+
+* c
+
+```c
+bool isPalindrome(char * s)
+{
+    int i,j;
+    int Len=(int)strlen(s);
+    for(int k=0;k<Len;k++)
+    {
+        if(s[k]>='A'&&s[k]<='Z') s[k]=s[k]+32;
+    }
+    //puts(s);
+    for(i=0,j=Len-1;i<j;i++,j--)
+    {
+        while(i<Len&&!isalpha(s[i])&&!isdigit(s[i])) i++;
+        while(j>=0&&!isalpha(s[j])&&!isdigit(s[j])) j--;
+        if(i>j)
+        {
+             return true;
+        }
+        if(s[i]!=s[j]) return false;
+    }
+    return true;
+}
+```
+

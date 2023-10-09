@@ -1,0 +1,29 @@
+* 
+
+```
+class Solution {
+public:
+    bool isPalindrome(string s) {
+        int i = 0;
+        int j = s.size()-1; //i从左往右，j从右往左
+        while(i < j){
+            while(i<j && (!isdigit(s[i]) && !isalpha(s[i]))){
+                ++i;
+            }
+            while( i < j && (!isdigit(s[j]) && !isalpha(s[j]))){
+                --j; //注意是--j,不是++
+            }
+            if(tolower(s[i]) != tolower(s[j])){ //不用判断是否相等，只需判断不相等，若不相等则false，相等则继续移动指针
+                return false;
+            }
+            ++i;
+            --j; //如果相等，则继续移动双指针  注意是--j,不是++
+
+
+        }
+        return true;
+
+    }
+};
+```
+

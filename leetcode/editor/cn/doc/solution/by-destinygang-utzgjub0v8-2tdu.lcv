@@ -1,0 +1,104 @@
+* c++
+
+```c++
+class Solution {
+  public:
+    vector<vector<string>> findLadders(string beginWord, string endWord,
+                                       vector<string> &wordList) {
+        vector<vector<string>> ret;
+        auto it = find(wordList.begin(),wordList.end(), endWord);
+        if (it == wordList.end())
+            return ret;
+        int src, dst;
+        dst = it - wordList.begin();
+
+        it = find(wordList.begin(),wordList.end(), beginWord);
+        if (it == wordList.end()) {
+            wordList.push_back(beginWord);
+            src = wordList.size() - 1;
+        } else {
+            src = it - wordList.begin();
+        }
+
+        int wordLen = beginWord.size();
+        // 构建邻接表
+        vector<vector<int>> graph(wordList.size());
+        for (int i = 0; i < wordList.size(); i++) {
+            for (int j = i + 1; j < wordList.size(); j++) {
+                int cnt = 0;
+                for (int k = 0; k < wordLen; ++k) {
+                    if (wordList[i][k] != wordList[j][k])
+                        cnt++;
+                    if (cnt > 1)
+                        break;
+                }
+                if (cnt == 1) {
+                    graph[i].push_back(j);
+                    graph[j].push_back(i);
+                }
+            }
+        }
+
+        // Dijkstra算法求最短路径
+        vector<int> distance(wordList.size(), INT_MAX);
+        vector<vector<int>> next(wordList.size());
+        Dijkstra(graph, src, distance, next);
+        // 不存在beginWord到endWord的路径
+        if (distance[dst] == INT_MAX)
+            return ret;
+
+        // DFS重建路径
+        vector<vector<int>> paths;
+        vector<int> path = {dst};
+        DFS(next, paths, path, dst, src);
+
+        for (auto &p : paths) {
+            vector<string> s_path;
+            for (int i = p.size() - 1; i >= 0;i--)
+                s_path.push_back(wordList[p[i]]);
+            ret.push_back(s_path);
+        }
+        return ret;
+    }
+
+    void DFS(vector<vector<int>> &next, vector<vector<int>> &paths,
+             vector<int> &path, int src, int dst) {
+        if (src == dst) {
+            paths.push_back(path);
+            return;
+        }
+
+        for (int node : next[src]) {
+            path.push_back(node);
+            DFS(next, paths, path, node, dst);
+            path.pop_back();
+        }
+    }
+
+    void Dijkstra(vector<vector<int>> &graph, int src, vector<int> &distance,
+                  vector<vector<int>> &next) {
+
+        distance[src] = 0;
+        priority_queue<pair<int, int>, vector<pair<int, int>>, greater<>> pq;
+        pq.emplace(0, src);
+        while (!pq.empty()) {
+            auto [w, x] = pq.top();
+            pq.pop();
+            if (w > distance[x])
+                continue;
+            // 遍历x的临边
+            for (int y : graph[x]) {
+                if (distance[x] + 1 < distance[y]) {
+                    distance[y] = distance[x] + 1;
+                    pq.emplace(distance[y], y);
+                    next[y].push_back(x);
+                } else if (distance[x] + 1 == distance[y]) {
+                    next[y].push_back(x);
+                }
+            }
+        }
+    }
+};
+
+```
+

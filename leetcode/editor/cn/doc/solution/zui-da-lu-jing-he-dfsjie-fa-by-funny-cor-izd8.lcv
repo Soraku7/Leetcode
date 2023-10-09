@@ -1,0 +1,25 @@
+## 注意返回（1）包含根节点的可拓展的最大路径和；
+
+## （2）随时判断当前根节点下所有可能的路径和是否大于全局变量路径和；
+
+## ****两者之间不同*****
+
+class Solution:
+def maxPathSum(self, root: Optional[TreeNode]) -> int:
+if not root.left and not root.right:
+return root.val
+
+    res_val = -100000
+    def rootSum(root):
+        nonlocal res_val
+        if not root.left and not root.right:
+            res_val = max(res_val, root.val)
+            return root.val
+        left_sum = rootSum(root.left) if root.left else 0
+        right_sum = rootSum(root.right) if root.right else 0
+        root_sum = max(root.val, left_sum + root.val, right_sum + root.val)
+        res_val = max(res_val, root_sum, left_sum + right_sum + root.val)
+        return root_sum
+    rootSum(root)
+    return res_val
+

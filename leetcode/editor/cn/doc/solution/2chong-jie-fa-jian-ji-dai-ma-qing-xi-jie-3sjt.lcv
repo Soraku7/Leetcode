@@ -1,0 +1,246 @@
+## 知识点要求
+
+本题使用 **BFS** + **HashMap** + **回溯** 作为解题基础点。
+如果有这三个知识点还不清楚的朋友，可以暂停，看一下这三点知识。
+要不看下面的代码，没办法搭建起解题的思路。
+
+### 为什么要用 BFS
+
+注意题的要求 **最短转换序列** 。（关键词：最短）
+
+也就是在一个 **树型结构** 状态数据中找小的 **树高**。
+
+如：
+
+* 
+
+```
+     a
+   /   \
+  b     c
+ / \   / \
+d  e  f   g
+           \
+            h
+```
+
+可以知道，在这个树型结构中，最小树高是 3 。
+并且，不管 h 结点以下，还有多少子节点，都不会影响到，我们得到最小树高是 3 的结论。
+
+结合题意是要返回多个最短转换序列，而只以 **层** 为单位来做判断是否到达 最小树高，并获取完当前层上所有的相同最小树高的子结节。
+而以 层 为单位向下遍历的，就只有 BFS。
+
+那DFS可以不可以啦？肯定的可以的，就是DFS做 剪枝 判断的会比BFS做判断要复杂和麻烦。
+我们的目的是快速的解决这道题，暂时先放弃DFS，后续有时间再补充
+
+---
+
+## 单向(自上而下) BFS（简单逻辑）
+
+![image.png](https://pic.leetcode-cn.com/1620179597-iCqoYn-image.png)
+
+常规 BFS 模版代码代码逻辑：
+
+* 
+
+```
+定义 层节点 容器
+根节点 压入容器内
+while (容器非空) {
+    获取容器内节点的个数（即当前处理层节点个数）
+    for (当前层节点个数) {
+        从容器中获取一个节点
+        按业务逻辑处理单个节点
+        获取当前节点的 子节点 压入容器内
+    }
+}
+```
+
+这题同样是可以套用这个模版来解决，需要修改的点：
+1. 需要改一下 单个节点 的 **数据结构**
+2. 处理单个节点的业务逻辑（回溯做业务，HashMap辅助业务逻辑）
+
+单个节点的结构使用 vector<string> 类型，也就是自上而下单次 转换序 的累加值。
+如：
+
+* 
+
+```
+          hit
+             \
+             hit,hot
+          /          \
+      hit,hot,dot    hit,hot,lot
+      /                 \
+    hit,hot,dot,dog     hit,hot,lot,log
+   /                      \
+hit,hot,dot,dog,cog       hit,hot,lot,log,cog
+```
+
+而节点内的最后一个 string 元素决定了 **下层**（也就是树型结构的子节点）节点，也就是 wordList 内的值。
+在获取到下层节点时，是需要把从 wordList 里面找到的元素给删除，避免 **重复转换** 进入死循环。
+
+代码：
+
+* 
+
+```
+class Solution {
+public:
+    vector<vector<string>> findLadders(string beginWord, string endWord, vector<string>& wordList) {
+        unordered_set<string> search(wordList.begin(), wordList.end()); // hash 提高转换(查找)效率
+        vector<vector<string>> res;
+        deque<vector<string>> worker; // 层节点容器
+        worker.push_back({beginWord}); // beginWord 作为起始的根节点
+        while (!worker.empty()) {
+            unordered_set<string> visited; // 一层内已转化过的 string 容器。set避免重复保存
+            for (int i = worker.size(); i > 0; --i) { // 层遍历
+                auto sub = worker.front(); worker.pop_front(); // 获取单个节点
+                auto tail = sub.back(); // 获取单个节点内的最后一个 string 元素
+                if (tail == endWord) { // 是在到达是转换的终点
+                    res.push_back(sub);
+                    continue;
+                }
+                for (int j = 0; j < tail.size(); ++j) { // 回溯试探 下层 节点的元素的可能性
+                    char temp = tail[j]; // 单个 string 回溯保存状态
+                    for (char c = 'a'; c <= 'z'; ++c) {
+                        if (c == temp) continue; // 忽略原始状态
+                        tail[j] = c;
+                        if (!search.count(tail)) continue; // 未找到转换序
+                        visited.insert(tail); // 找到转换序，保存 已使用 转换
+                        sub.push_back(tail); // 节点 回溯
+                        worker.push_back(sub); // 向容器内保存 子节点
+                        sub.pop_back(); // 回溯恢复
+                    }
+                    tail[j] = temp; // string 回溯恢复状态
+                }
+            }
+            if (res.size()) return res; // 第一次到达 树底，也就是得到最小转换序
+            for (auto &w : visited) search.erase(w); // 删除已使用的转换序
+        }
+        return {};
+    }
+};
+```
+
+时间复杂度：O(n)，n 为 wordList 的个数；忽略 string 的复制带来时间，和 26 个字母遍历的系数。
+
+---
+
+## 双向(两边收缩)BFS
+
+![image.png](https://pic.leetcode-cn.com/1620182091-sMHJRE-image.png)
+
+双向 BFS 快速更快，效率更高，但是同时实现的复杂度也会更难，理解的成本也会提高很多。
+（下面的内容，能理解多少是多少，一定不要强求自己一下就明白，要不会卡在这，浪费时间。有时间回过头看看，说不一定一下就明白了）
+
+### 为什么双向BFS比单向BFS更快
+
+如果把上面单向BFS遍历的面积理解成一个 **三角形**。
+那么双向BFS遍历的面积就是上面三角形里面的 **菱形**（右图蓝色部分）。
+如图：
+
+![image.png](https://pic.leetcode-cn.com/1620184096-ymksOd-image.png)
+
+也就是双向BFS节省去了 红色 部分节点的遍历（相当于剪枝），遍历的节点更少，速度也就更快。
+
+另一种理解方式：
+
+* 
+
+```
+单向BFS：左点 右面，需要在 右面 找到一点，并找出路径与左点连成一条线
+双向BFS：左点 右点，找出路径左右点连成一条线
+```
+
+### 双向BFS处理逻辑
+
+基本和单向BFS处理逻辑是差不多的，以 **层节点** 为单位来处理节点业务逻辑。
+只是当每一次层节点上的逻辑处理完后，再根据 **两边** 层节点的个数来优先选择处理那边。
+优先处理 层节点 数**更少**的一边。（关键词：更少）
+基本都是左进一层，换右进一层，再换左进一层.......这样两边缩进的方式
+
+### 本题双向BFS处理细节
+
+1. 节点遍历逻辑：
+   因为是2边同时向中间压缩的方式，没办法向上面单向BFS那样，以单层完整的转换路径作为节点的数据结构。
+   所以本题先使用 双向BFS 先建立好单词之间完整的 **树型转换序关系**。
+   再对此树型结构做回溯遍历，获取不同的转换序列。
+2. 双向BFS退出条件：
+   虽然是双向压缩，但是每次只处理一层的节点数，所以不会存在重复，或超过遍历的 层。
+   当遍历到左右层高差距为 1 时就退出。
+   **也就是前层节点的 子节点 出现在另一层**。
+3. 树型 数据结构的建立：
+   为了方便，选用 HashMap 来做树型数据的容器。（也不是不能真的做像多叉树的那样，用指针搭建树型结构。只是重新定义结构，代码和逻辑会变得更复杂，没必要）
+   HashMap这种 Key/Value 对的形式是具有递归的属性的，即Value里面的值，是别一个Key。
+4. 数据保存：
+   注意代码里面的这句 reversed ? next[s].push_back(w) : next[w].push_back(s);
+   当是 **左->右** 遍历时，是以 父节点 为基准去转换成 子节点。（ w 为 KEY，s 为 VALUE）
+   当是 **右->左** 遍历时，因为反向遍历，是以子节点为基准，去转换成 父节点。（ s 为 KEY，w 为 VALUE）
+   （关健词：方向 / 父节点 / 子节点。大家可以多想一下，或者使笔在纸上画一下）
+
+代码：
+
+* 
+
+```
+class Solution {
+public:
+    vector<vector<string>> findLadders(string beginWord, string endWord, vector<string>& wordList) {
+        vector<vector<string>> res;
+        unordered_set<string> dict(wordList.begin(), wordList.end()), head{beginWord}, tail{endWord};
+        if(!dict.count(endWord)) return res;
+        dict.erase(beginWord), dict.erase(endWord);
+        unordered_map<string, vector<string>> next;
+        bool reversed = false, found = false; // 一些初始化准备
+        while (!head.empty()) {
+            unordered_set<string> temp; // 保存已转化过的 string
+            for (const auto &w : head) { // 层 遍历
+                string s = w;
+                for (size_t i = 0; i < s.size(); ++i) { // 回溯查找子节点
+                    char c = s[i];
+                    for (char j = 'a'; j <= 'z'; ++j) {
+                        s[i] = j;
+                        if (tail.count(s)) { // 退出条件
+                            reversed ? next[s].push_back(w) : next[w].push_back(s);
+                            found = true;
+                        }
+                        if (dict.count(s)) { // 保存已转换的子节点
+                            reversed ? next[s].push_back(w) : next[w].push_back(s);
+                            temp.insert(s);
+                        }
+                    }
+                    s[i] = c;
+                }
+            }
+            if (found) break; // 退出
+            for (const auto &w : temp) dict.erase(w); // 删除已转换的 string
+            if (temp.size() <= tail.size()) head = temp; // 根据左右层节点大小来切换遍历方向
+            else {
+                reversed = !reversed;
+                head = tail;
+                tail = temp;
+            }
+        }
+        if (found) { // 根据上面双向BFS构建的树型数据结构来梳理出不同的转换序
+            vector<string> path = {beginWord};
+            backtracking(beginWord, endWord, next, path, res); // 回溯算法的应用
+        }
+        return res;
+    }
+
+private:
+    void backtracking(const string &src, const string &dst, unordered_map<string,vector<string>> &next,
+        vector<string> &path, vector<vector<string>> &res) {
+        if (src == dst) res.push_back(path);
+        for (const auto &w : next[src]) { // 按 层 为单位回溯求不同的转换序
+            path.push_back(w);
+            backtracking(w, dst, next, path, res);
+            path.pop_back();
+        }
+    }
+};
+```
+
+感谢大家的阅读，如果有什么不懂，或者讲得不对的地方，欢迎大家留言讨论
+

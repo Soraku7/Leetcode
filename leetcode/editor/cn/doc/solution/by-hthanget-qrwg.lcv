@@ -1,0 +1,36 @@
+#### 深度优先遍历
+
+自底向上的递归。
+
+对于二叉树，我们令每个结点 $u$ 作为 $LCA$ (最近公共祖先)，
+结点作为 $LCA$ ， 经过它的最大路径 $=$ 往左子树的最大路径 $+$ 往右子树的最大路径 $+$ 它自己的路径 。
+有 $ans = max(ans,v_u+l+r$)
+
+对于结点 $u$ 的上层结点，经过 $u$ 的最大路径 $=max($ 往左走 $,$ 往右走 $)+$ 它自己的路径
+有 $path_u=max(l,r)+v_u$
+
+递归时，自底向上，记录结点的左右最大路径 $l/r$ ，维护结点作为 $LCA$ 的 $ans$ 。遇到空结点，没有路径，即为 $0$ 。
+
+* cpp
+
+```cpp
+class Solution {
+public:
+    int ans;
+    int maxPathSum(TreeNode* root) {
+        ans = INT_MIN;
+        dfs(root);
+        return ans;
+    }
+    int dfs(TreeNode *root){
+        if(!root) return 0;
+        int l = max(0,dfs(root->left)),r = max(0,dfs(root->right));
+        ans = max(ans,l+r+root->val);
+        return root->val + max(l,r);
+    }
+};
+```
+
+1. 时间复杂度 : $O(n)$ ， 每个结点最多遍历一次，时间复杂度 $O(n)$ 。
+2. 空间复杂度 : $O(|h|)$ ， 函数压栈的最大深度 $O(n)$ 。
+

@@ -1,0 +1,291 @@
+## 思路
+
+**不少同学对动态规划还处于朦胧状态，我特意录了一期视频，讲一讲[动态规划解题方法论](https://www.bilibili.com/video/BV13Q4y197Wg)**，这里详细介绍了动规五部曲，相信结合本篇题解，会对你学习动态规划有所帮助。
+
+这道题目如果不是子序列，而是要求连续序列的，那就可以考虑用KMP。
+
+这道题目相对于72. 编辑距离，简单了不少，因为本题相当于只有删除操作，不用考虑替换增加之类的。
+
+但相对于刚讲过的[动态规划：392.判断子序列](https://programmercarl.com/0392.判断子序列.html)就有难度了，这道题目双指针法可就做不了了，来看看动规五部曲分析如下：
+
+1. 确定dp数组（dp table）以及下标的含义
+
+dp[i][j]：以i-1为结尾的s子序列中出现以j-1为结尾的t的个数为dp[i][j]。
+
+2. 确定递推公式
+
+这一类问题，基本是要分析两种情况
+
+* s[i - 1] 与 t[j - 1]相等
+* s[i - 1] 与 t[j - 1] 不相等
+
+当s[i - 1] 与 t[j - 1]相等时，dp[i][j]可以有两部分组成。
+
+一部分是用s[i - 1]来匹配，那么个数为dp[i - 1][j - 1]。
+
+一部分是不用s[i - 1]来匹配，个数为dp[i - 1][j]。
+
+这里可能有同学不明白了，为什么还要考虑 不用s[i - 1]来匹配，都相同了指定要匹配啊。
+
+例如： s：bagg 和 t：bag ，s[3] 和 t[2]是相同的，但是字符串s也可以不用s[3]来匹配，即用s[0]s[1]s[2]组成的bag。
+
+当然也可以用s[3]来匹配，即：s[0]s[1]s[3]组成的bag。
+
+所以当s[i - 1] 与 t[j - 1]相等时，dp[i][j] = dp[i - 1][j - 1] + dp[i - 1][j];
+
+当s[i - 1] 与 t[j - 1]不相等时，dp[i][j]只有一部分组成，不用s[i - 1]来匹配，即：dp[i - 1][j]
+
+所以递推公式为：dp[i][j] = dp[i - 1][j];
+
+3. dp数组如何初始化
+
+从递推公式dp[i][j] = dp[i - 1][j - 1] + dp[i - 1][j]; 和 dp[i][j] = dp[i - 1][j]; 中可以看出dp[i][0] 和dp[0][j]是一定要初始化的。
+
+每次当初始化的时候，都要回顾一下dp[i][j]的定义，不要凭感觉初始化。
+
+dp[i][0]表示什么呢？
+
+dp[i][0] 表示：以i-1为结尾的s可以随便删除元素，出现空字符串的个数。
+
+那么dp[i][0]一定都是1，因为也就是把以i-1为结尾的s，删除所有元素，出现空字符串的个数就是1。
+
+再来看dp[0][j]，dp[0][j]：空字符串s可以随便删除元素，出现以j-1为结尾的字符串t的个数。
+
+那么dp[0][j]一定都是0，s如论如何也变成不了t。
+
+最后就要看一个特殊位置了，即：dp[0][0] 应该是多少。
+
+dp[0][0]应该是1，空字符串s，可以删除0个元素，变成空字符串t。
+
+初始化分析完毕，代码如下：
+
+* CPP
+
+```CPP
+vector<vector<long long>> dp(s.size() + 1, vector<long long>(t.size() + 1));
+for (int i = 0; i <= s.size(); i++) dp[i][0] = 1;
+for (int j = 1; j <= t.size(); j++) dp[0][j] = 0; // 其实这行代码可以和dp数组初始化的时候放在一起，但我为了凸显初始化的逻辑，所以还是加上了。
+
+```
+
+4. 确定遍历顺序
+
+从递推公式dp[i][j] = dp[i - 1][j - 1] + dp[i - 1][j]; 和 dp[i][j] = dp[i - 1][j]; 中可以看出dp[i][j]都是根据左上方和正上方推出来的。
+
+所以遍历的时候一定是从上到下，从左到右，这样保证dp[i][j]可以根据之前计算出来的数值进行计算。
+
+代码如下：
+
+* CPP
+
+```CPP
+for (int i = 1; i <= s.size(); i++) {
+    for (int j = 1; j <= t.size(); j++) {
+        if (s[i - 1] == t[j - 1]) {
+            dp[i][j] = dp[i - 1][j - 1] + dp[i - 1][j];
+        } else {
+            dp[i][j] = dp[i - 1][j];
+        }
+    }
+}
+```
+
+5. 举例推导dp数组
+
+以s："baegg"，t："bag"为例，推导dp数组状态如下：
+
+![image.png](https://pic.leetcode-cn.com/1631603232-JKTOsh-image.png)
+
+如果写出来的代码怎么改都通过不了，不妨把dp数组打印出来，看一看，是不是这样的。
+
+动规五部曲分析完毕，代码如下：
+
+* CPP
+
+```CPP
+class Solution {
+public:
+    int numDistinct(string s, string t) {
+        vector<vector<uint64_t>> dp(s.size() + 1, vector<uint64_t>(t.size() + 1));
+        for (int i = 0; i < s.size(); i++) dp[i][0] = 1;
+        for (int j = 1; j < t.size(); j++) dp[0][j] = 0;
+        for (int i = 1; i <= s.size(); i++) {
+            for (int j = 1; j <= t.size(); j++) {
+                if (s[i - 1] == t[j - 1]) {
+                    dp[i][j] = dp[i - 1][j - 1] + dp[i - 1][j];
+                } else {
+                    dp[i][j] = dp[i - 1][j];
+                }
+            }
+        }
+        return dp[s.size()][t.size()];
+    }
+};
+```
+
+## 其他语言版本
+
+Java：
+
+* java
+
+```java
+class Solution {
+    public int numDistinct(String s, String t) {
+        int[][] dp = new int[s.length() + 1][t.length() + 1];
+        for (int i = 0; i < s.length() + 1; i++) {
+            dp[i][0] = 1;
+        }
+        
+        for (int i = 1; i < s.length() + 1; i++) {
+            for (int j = 1; j < t.length() + 1; j++) {
+                if (s.charAt(i - 1) == t.charAt(j - 1)) {
+                    dp[i][j] = dp[i - 1][j - 1] + dp[i - 1][j];
+                }else{
+                    dp[i][j] = dp[i - 1][j];
+                }
+            }
+        }
+        
+        return dp[s.length()][t.length()];
+    }
+}
+```
+
+Python：
+
+* python
+
+```python
+class Solution:
+    def numDistinct(self, s: str, t: str) -> int:
+        dp = [[0] * (len(t)+1) for _ in range(len(s)+1)]
+        for i in range(len(s)):
+            dp[i][0] = 1
+        for j in range(1, len(t)):
+            dp[0][j] = 0
+        for i in range(1, len(s)+1):
+            for j in range(1, len(t)+1):
+                if s[i-1] == t[j-1]:
+                    dp[i][j] = dp[i-1][j-1] + dp[i-1][j]
+                else:
+                    dp[i][j] = dp[i-1][j]
+        return dp[-1][-1]
+```
+
+Python3:
+
+* python
+
+```python
+class SolutionDP2:
+    """
+    既然dp[i]只用到dp[i - 1]的状态，
+    我们可以通过缓存dp[i - 1]的状态来对dp进行压缩，
+    减少空间复杂度。
+    （原理等同同于滚动数组）
+    """
+    
+    def numDistinct(self, s: str, t: str) -> int:
+        n1, n2 = len(s), len(t)
+        if n1 < n2:
+            return 0
+
+        dp = [0 for _ in range(n2 + 1)]
+        dp[0] = 1
+
+        for i in range(1, n1 + 1):
+            # 必须深拷贝
+            # 不然prev[i]和dp[i]是同一个地址的引用
+            prev = dp.copy()
+            # 剪枝，保证s的长度大于等于t
+            # 因为对于任意i，i > n1, dp[i] = 0
+            # 没必要跟新状态。 
+            end = i if i < n2 else n2
+            for j in range(1, end + 1):
+                if s[i - 1] == t[j - 1]:
+                    dp[j] = prev[j - 1] + prev[j]
+                else:
+                    dp[j] = prev[j]
+        return dp[-1]
+```
+
+Go：
+
+* go
+
+```go
+func numDistinct(s string, t string) int {
+    dp:= make([][]int,len(s)+1)
+    for i:=0;i<len(dp);i++{
+        dp[i] = make([]int,len(t)+1)
+    }
+    // 初始化
+    for i:=0;i<len(dp);i++{
+        dp[i][0] = 1
+    }
+    // dp[0][j] 为 0，默认值，因此不需要初始化
+    for i:=1;i<len(dp);i++{
+        for j:=1;j<len(dp[i]);j++{
+            if s[i-1] == t[j-1]{
+                dp[i][j] = dp[i-1][j-1] + dp[i-1][j]
+            }else{
+                dp[i][j] = dp[i-1][j]
+            }
+        }
+    }
+    return dp[len(dp)-1][len(dp[0])-1]
+}
+```
+
+Javascript:
+
+* javascript
+
+```javascript
+const numDistinct = (s, t) => {
+    let dp = Array.from(Array(s.length + 1), () => Array(t.length +1).fill(0));
+
+    for(let i = 0; i <=s.length; i++) {
+        dp[i][0] = 1;
+    }
+    
+    for(let i = 1; i <= s.length; i++) {
+        for(let j = 1; j<= t.length; j++) {
+            if(s[i-1] === t[j-1]) {
+                dp[i][j] = dp[i-1][j-1] + dp[i-1][j];
+            } else {
+                dp[i][j] = dp[i-1][j]
+            }
+        }
+    }
+
+    return dp[s.length][t.length];
+};
+```
+
+# 子序列系列力扣题目
+
+按照如下顺序将力扣题目做完，相信会帮助你对**动态规划之子序列问题**有一个深刻的理解。
+
+1. [300.最长递增子序列](https://programmercarl.com/0300.最长上升子序列.html)
+2. [674.最长连续递增序列](https://programmercarl.com/0674.最长连续递增序列.html)
+3. [718.最长重复子数组](https://programmercarl.com/0718.最长重复子数组.html)
+4. [1143.最长公共子序列](https://programmercarl.com/1143.最长公共子序列.html)
+5. [1035.不相交的线](https://programmercarl.com/1035.不相交的线.html)
+6. [53.最大子序和](https://programmercarl.com/0053.最大子序和（动态规划）.html)
+7. [392.判断子序列](https://programmercarl.com/0392.判断子序列.html)
+8. [115.不同的子序列](https://programmercarl.com/0115.不同的子序列.html)
+9. [583.两个字符串的删除操作](https://programmercarl.com/0583.两个字符串的删除操作.html)
+10. [72.编辑距离](https://programmercarl.com/0072.编辑距离.html)
+11. [为了绝杀编辑距离，我做了三步铺垫，你都知道么？](https://programmercarl.com/为了绝杀编辑距离，卡尔做了三步铺垫.html)
+12. [647.回文子串](https://programmercarl.com/0647.回文子串.html)
+13. [516.最长回文子序列](https://programmercarl.com/0516.最长回文子序列.html)
+14. [动态规划总结篇](https://programmercarl.com/动态规划总结篇.html)
+
+-----------
+
+**大家好，我是程序员Carl，点击[我的头像](https://programmercarl.com/)**，查看力扣详细刷题攻略，你会发现相见恨晚！
+
+**如果感觉题解对你有帮助，不要吝啬给一个👍吧！**
+

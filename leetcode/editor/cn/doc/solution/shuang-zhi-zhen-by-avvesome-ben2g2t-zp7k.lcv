@@ -1,0 +1,50 @@
+### 解题思路
+
+先把数据进行整理，再双指针比较
+
+### 代码
+
+* cpp
+
+```cpp
+class Solution {
+public:
+    bool getValue(char& k)
+    {
+        if(k>=65&& k<=90)
+        {
+            k+=32;
+            return true;
+        }else if ((k>=97 && k<=122)||(k>=48 && k<=57))
+        {
+            return true;
+        }
+        return false;
+    }
+    bool isPalindrome(string s) {
+        if (s.size()==0)
+            return true;
+        int a = 0,b = s.size()-1;
+        while(a<=b)
+        {
+            if(getValue(s[a]))
+            {
+                if(getValue(s[b]))
+                {
+                    if(s[a]!=s[b])
+                        return false;
+                    a++;b--;                    
+                }else
+                {
+                    b--;
+                }
+            }
+            else{
+                a++;
+            }
+        }
+        return true;
+    }
+};
+```
+

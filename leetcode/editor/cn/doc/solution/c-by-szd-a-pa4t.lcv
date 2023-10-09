@@ -1,0 +1,24 @@
+### 解题思路
+
+也没用dp，就随便写写
+
+### 代码
+
+* cpp
+
+```cpp
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) {
+        int minnum=INT_MAX,res=0;
+        for(int i:prices)
+        {
+            if(i<minnum) minnum=i;
+            if(i-minnum>res) res=i-minnum;
+        }
+
+        return res;
+    }
+};
+```
+

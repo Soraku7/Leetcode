@@ -1,0 +1,264 @@
+**方法一：记忆化搜索**
+
+**递归搜索：** 常规的递归搜索 $dfs(i)$ 在到达一个位置 $i$ 时无非有两种情况（选或不选）：
+* 跳过 $i$ 位置，直接考虑下一步；
+* 选择 $i$ 位置，并根据实际情况判断选择是否可行，以及下一步操作如何进行。
+
+**选或不选：**
+在本题中，我们的目标是在字符串 $s$ 中匹配 $t$，套用常规的递归搜索模板：
+记 ${dfs}(i,\ j)$ 表示匹配到字符 $s[i]$ 和 $t[j]$ 时的方案数目，当递归搜索到达 $s[i]$ 时我们有两种选择：
+
+1. 跳过 $s[i]$：
+
+   * $则直接考虑 s[i+1] 与 t[j] 进行匹配，即 dfs(i+1, j)；$
+2. 选择 $s[i]$：
+   - 但前提是 $s[i]=t[j]$ 方可选择 $s[i]$，且 $t[j]$ 匹配完成后下一步考虑 $s[i+1]$ 与 $t[j+1]$ 进行匹配，即 $dfs(i+1, j+1)$。
+
+**递归终止：**
+递归终止的条件为：
+1. $j=len(t)$，表明找到了一个匹配到 $t$ 的方案，方案数 $+1$ 并返回；
+2. $i=len(s), j<len(t)$，遍历完了 $s$ 依然没匹配完 $t$ 中的字符，方案数 $+0$ 并返回。
+
+&nbsp;
+
+#### 代码
+
+递归搜索的基础代码如下：
+
+* []
+
+```Python
+class Solution:
+    def numDistinct(self, s: str, t: str) -> int:
+        
+        def dfs(i, j):
+            if j == len(t):     # t匹配完了
+                return 1
+            if i == len(s):     # s匹配完了依然没找到答案
+                return 0
+            
+            cnt = 0
+            
+            # 跳过s[i]，并进行下一步搜索：s[i+1]与t[j]匹配
+            cnt += dfs(i+1, j)
+
+            # 选择s[i]，并进行下一步搜索
+            if s[i] == t[j]:    # 能选择s[i]的前提条件为：s[i] == t[j]
+                cnt += dfs(i+1, j+1)
+            
+            return cnt
+        
+        return dfs(0, 0)        # 初始从s[0]和t[0]开始搜索
+```
+
+<br> </br>
+
+以上代码会超时，可考虑在搜索时加入记忆化：若要搜索的位置 $(i,j)$ 之前已经搜索过，则可直接返回之前的结果。
+
+* []
+
+```Python
+class Solution:
+    def numDistinct(self, s: str, t: str) -> int:
+        mp = {}     # 记忆化单元【哈希表存储】
+
+        # @functools.cache
+        def dfs(i, j):
+            if (i, j) in mp:    # 以前搜索过该位置
+                return mp[(i,j)]
+
+            if j == len(t):     # t匹配完了
+                return 1
+            if i == len(s):     # s匹配完了依然没找到答案
+                return 0
+            
+            cnt = 0
+            
+            # 跳过s[i]，并进行下一步搜索：s[i+1]与t[j]匹配
+            cnt += dfs(i+1, j)
+
+            # 选择s[i]，并进行下一步搜索
+            if s[i] == t[j]:    # 能选择s[i]的前提条件为：s[i] == t[j]
+                cnt += dfs(i+1, j+1)
+            
+            mp[(i, j)] = cnt    # 记录下 (i,j) 的结果，以备后续直接使用
+            return cnt
+        
+        return dfs(0, 0)        # 初始从s[0]和t[0]开始搜索
+```
+
+* []
+
+```Python
+class Solution:
+    def numDistinct(self, s: str, t: str) -> int:
+
+        @functools.cache        # Python functools记忆化模块，等价于哈希表记录的功能
+        def dfs(i, j):
+
+            if j == len(t):     # t匹配完了
+                return 1
+            if i == len(s):     # s匹配完了依然没找到答案
+                return 0
+            
+            cnt = 0
+            
+            # 跳过s[i]，并进行下一步搜索：s[i+1]与t[j]匹配
+            cnt += dfs(i+1, j)
+
+            # 选择s[i]，并进行下一步搜索
+            if s[i] == t[j]:    # 能选择s[i]的前提条件为：s[i] == t[j]
+                cnt += dfs(i+1, j+1)
+            
+            return cnt
+        
+        return dfs(0, 0)        # 初始从s[0]和t[0]开始搜索
+```
+
+> **递归搜索**本质上是暴力解法，时间复杂度通常在指数级别，在数据量较大时显然不是较好的实现方式。
+
+<br> </br>
+
+很多**自上而下**的递归搜索过程都可以修改为复杂度更低的**自下而上的**动态规划过程，下面介绍一下动态规划的实现方法。
+
+---
+
+**方法二：动态规划**
+
+「动态规划」是解决此类字符串匹配问题的通用方法。
+
+---
+
+**拓展：**
+* 动态规划，可解决一众字符串匹配问题：
+
+  | 题号 |  题解 | 难度 |
+  | :-----| :---- | :----: |
+  | [10. 正则表达式匹配](https://leetcode-cn.com/problems/regular-expression-matching/) |  [状态转移推导 + 滚动优化 + 提前结束](https://leetcode-cn.com/problems/regular-expression-matching/solution/by-flix-musv/) | 困难 |
+  | [44. 通配符匹配](https://leetcode-cn.com/problems/wildcard-matching/) |   [状态转移推导 + 滚动优化 + 提前结束](https://leetcode-cn.com/problems/wildcard-matching/solution/by-flix-d5bc/) | 困难 |
+  |  [72. 编辑距离](https://leetcode-cn.com/problems/edit-distance/) |  [字符串DP解决一众字符串匹配问题](https://leetcode-cn.com/problems/edit-distance/solution/by-flix-xaaz/) | 困难 |
+  | （本题）[115. 不同的子序列](https://leetcode-cn.com/problems/distinct-subsequences/) |  [记忆化搜索、 动态规划 + 滚动数组优化](https://leetcode-cn.com/problems/distinct-subsequences/solution/dong-tai-gui-hua-dpmo-ban-jie-jue-yi-zho-if29/) | 困难 |
+  | （雷同题目）[剑指 Offer II 097. 子序列的数目](https://leetcode.cn/problems/21dk04/) |  [记忆化搜索、 动态规划 + 滚动数组优化](https://leetcode.cn/problems/21dk04/solution/by-flix-b4er/) | 困难 |
+  |  [583. 两个字符串的删除操作](https://leetcode-cn.com/problems/delete-operation-for-two-strings/) |  [字符串DP解决一众字符串匹配问题](https://leetcode-cn.com/problems/delete-operation-for-two-strings/solution/by-flix-lfnd/) | 中等 |
+  |  [1143. 最长公共子序列](https://leetcode-cn.com/problems/longest-common-subsequence/) |  [字符串DP解决一众字符串匹配问题](https://leetcode-cn.com/problems/longest-common-subsequence/solution/by-flix-6gy2/) | 中等 |
+
+---
+
+**解题思路：**
+
+记 $m=len(t),\ n=len(s)$，创建二维数组 $dp_{(m+1)\cdot {(n+1)}}$，其中 $dp[i][j]$ 表示 $t$ 的前 $i$ 个**连续字符**（即 $t[:i]$）在 $s$ 的前 $j$ 个字符（即 $s[:j]$）中出现的个数。
+
+* **初始化**：$dp[i][j] = 0$ ；
+* **边界条件**：$dp[0][j] = 1, j \in[0, n]$，因为将 $s[:j]$ 变成空字符 `' '` 只有一种操作：删除 $s[:j]$ 中的全部元素 ；
+* **状态转移**（行遍历）：
+  1. 当 $t[i-1] \neq s[j-1]$ 时，相当于 $s$ 中新加入的第 $j$ 个字符 $s[j-1]$ 没有起到作用，因此：
+     $\textcolor{black}{dp[i][j]=dp[i][j-1]}  \tag{1}$
+
+  2. 当 $t[i-1] = s[j-1]$ 时，则存在两种模式：
+     * 考虑 $t[i-1]$ 与 $s[j-1]$ 匹配，对应 $t[:i-1]$ 和 $s[:j-1]$ 匹配的数目 $dp[i-1][j-1]$ ；
+     * 不考虑 $t[i-1]$ 与 $s[j-1]$ 匹配，相当于 $s[j-1]$ 没有起到作用，对应 $dp[i][j-1]$ 。
+
+     综合起来则有：
+     $\textcolor{black}{dp[i][j]=dp[i-1][j-1]+dp[i][j-1]}     \tag{2}$
+
+最终 $dp[m][n]$ 即为答案：在 $s$ 的子序列中 $t$ 出现的个数。
+
+---
+
+**总结来看**，最终的状态转移方程如下：
+
+$$
+dp[i][j]=
+\begin{cases}
+\ dp[i][j-1] \ , & t[i-1]\neq s[j-1]  \\
+\ dp[i][j-1] \ + \ dp[i-1][j-1] \ , & t[i-1]= s[j-1] \\
+\tag{3}
+\end{cases}
+$$
+
+<br> </br>
+
+从坐标的角度来看，对应的状态更新过程如下图所示：
+
+![LeetCode-115-1.png](https://pic.leetcode-cn.com/1650908839-hiMnBJ-LeetCode-115-1.png)
+
+---
+
+<br> </br>
+
+下图以 $t=bag,\ s=babgbag$ 为例，展示了这一流程：
+
+![LeetCode-115.svg](https://pic.leetcode-cn.com/1649429754-LsLURE-LeetCode-115.svg)
+
+---
+
+&nbsp;
+
+### 代码
+
+**1. 二维DP**
+动态规划的基础代码如下：
+
+* []
+
+```Python
+class Solution:
+    def numDistinct(self, s: str, t: str) -> int:
+        
+        m, n = len(t), len(s)
+        if m > n:
+            return 0
+        
+        dp = [[0] * (n+1) for _ in range(m+1)]  # 初始化
+        for j in range(n+1):    # 边界条件
+            dp[0][j] = 1
+
+        for i in range(1, m+1):
+            for j in range(1, n+1):
+                if t[i-1] != s[j-1]:            # 条件1
+                    dp[i][j] = dp[i][j-1]
+                else:                           # 条件2
+                    dp[i][j] = dp[i][j-1] + dp[i-1][j-1]
+        
+        return dp[m][n]
+```
+
+![image.png](https://pic.leetcode-cn.com/1649432521-uFvGoM-image.png)
+
+<br> </br>
+
+**2. 一维DP：** 动态规划的滚动数组优化
+
+在上面的状态转移方程中，每一步的状态 $dp[i][j]$ 只与左边 $dp[i][j-1]$ 和左上角 $dp[i-1][j-1]$ 的状态有关，因此可基于**滚动数组**的思想进行对状态空间进行优化：
+
+![LeetCode-dp_update-1.png](https://pic.leetcode-cn.com/1650908010-DCIBgV-LeetCode-dp_update-1.png)
+
+* []
+
+```Python
+class Solution:
+    def numDistinct(self, s: str, t: str) -> int:
+        
+        m, n = len(t), len(s)
+        if m > n:
+            return 0
+        
+        dp = [1] * (n+1)        # 边界条件
+
+        for i in range(1, m+1):
+            dp2 = [0] * (n+1)   # 滚动数组
+            for j in range(1, n+1):
+                if t[i-1] != s[j-1]:            # 条件1
+                    dp2[j] = dp2[j-1]
+                else:                           # 条件2
+                    dp2[j] = dp2[j-1] + dp[j-1]
+            dp = dp2
+
+        return dp[n]
+```
+
+<br> </br>
+
+经滚动数组优化后，性能得到了较为明显的提升：
+
+![image.png](https://pic.leetcode-cn.com/1649432367-VEsoHV-image.png)

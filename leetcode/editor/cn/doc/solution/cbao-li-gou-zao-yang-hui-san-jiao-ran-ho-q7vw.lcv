@@ -1,0 +1,21 @@
+* 
+
+```
+class Solution {
+public:
+    vector<int> getRow(int rowIndex) {
+        int r = rowIndex + 1;
+        vector<vector<int>> vv(r, vector<int>(r, 0));
+        for(int i = 0; i < r; i++) vv[i][0] = 1;
+        for(int i = 1; i < r; i++) {
+            for(int j = 1; j < r; j++) {
+                vv[i][j] = vv[i - 1][j] + vv[i - 1][j - 1];
+            }
+        }
+        vector<int> res;
+        for(int i = 0; i < r; i++) res.push_back(vv[rowIndex][i]);
+        return res;
+    }
+};
+```
+

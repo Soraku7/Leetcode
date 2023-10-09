@@ -1,0 +1,42 @@
+### 解题思路
+
+C++ 对撞指针
+
+### 代码
+
+* cpp
+
+```cpp
+class Solution {
+public:
+    bool isPalindrome(string s) {
+         //用来存放清洗之后的字符串
+        string str_;
+
+        for(char ch : s) {
+            if(isalnum(ch)) {
+                //转化为小写
+                str_ += tolower(ch);
+            }
+        }
+        //对撞指针
+        int size = str_.size();
+        int left = 0;
+        int right = size - 1;
+
+        for(int i = 0;i<size;i++) {
+            if (str_[left] != str_[right]) {
+                return false;
+            }
+            left ++;
+            right --;
+
+
+        }
+        return true;
+
+
+    }
+};
+```
+
