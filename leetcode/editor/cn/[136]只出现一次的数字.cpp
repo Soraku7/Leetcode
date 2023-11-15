@@ -43,25 +43,16 @@
 
 
 //leetcode submit region begin(Prohibit modification and deletion)
-lass Solution {
-        public:
-        int candy(vector<int>& ratings) {
-            vector<int> sup(ratings.size() , 1);
-            
-            for(int i = 1 ; i < ratings.size() ; i ++){
-                if(ratings[i] > ratings[i - 1]) sup[i] = sup[i - 1] + 1;
-            }
-            
-            for(int i = ratings.size() - 2 ; i >= 0 ; i --){
-                if(ratings[i] > ratings[i + 1])
-                    sup[i] = max(sup[i + 1] + 1, sup[i]);
-            }
-            int ans = 0;
-            for(int i : sup){
-                ans += i;
-            }
-            
-            return ans;
+class Solution {
+public:
+    int singleNumber(vector<int>& nums) {
+        int num = 0;
+        for(auto i : nums){
+            num ^= i;
         }
+        
+        return num;
+    }
+    
 };
 //leetcode submit region end(Prohibit modification and deletion)
